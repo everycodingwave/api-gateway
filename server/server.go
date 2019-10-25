@@ -115,8 +115,8 @@ func createHTTPRequest(method string, url string, oreq *http.Request) (*http.Req
 		return nil, missingAuthToken
 	}
 
-	// req.Header.Set(apiAuthHeader, token)
-	// req.Header.Set("Content-Type", "application/json")
-	copyHeader(req.Header, oreq.Header)
+	req.Header.Set(apiAuthHeader, token)
+	req.Header.Set("Content-Type", "application/json")
+	// copyHeader(req.Header, oreq.Header)
 	return req, nil
 }
