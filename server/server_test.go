@@ -2,7 +2,9 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -41,4 +43,34 @@ func TestCreateHTTPRequest(t *testing.T) {
 		t.Errorf("expect new_fake_url, but got %s", nreq.URL.RequestURI())
 	}
 
+	if nreq.Body != oreq.Body {
+		t.Errorf("expect request body being copied")
+	}
+
+	if val := nreq.Header.Get(apiAuthHeader); val != "fake_token" {
+		t.Errorf("expect header %s:fake_token, but got %s", apiAuthHeader, val)
+	}
+
+	// testing error case
+	oreq.Header.Del(apiAuthHeader)
+	nreq, err = createHTTPRequest("GET", "new_fake_url", oreq)
+	if err != missingAuthToken {
+		t.Errorf("expect throw missing auth token error, but got %v", err)
+	}
+
+}
+
+func TestHandleHTTPError(t *testing.T) {
+	rr := httptest.NewRecorder()
+	handleHTTPError("", errors.New("random error"), rr)
+
+	if rr.Code != http.StatusInternalServerError {
+		t.Errorf("expect http error code %d but got %d", http.StatusInternalServerError, rr.Code)
+	}
+
+	rr = httptest.NewRecorder()
+	handleHTTPError("", missingAuthToken, rr)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expect http error code %d but got %d", http.StatusBadRequest, rr.Code)
+	}
 }
