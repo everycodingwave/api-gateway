@@ -12,7 +12,7 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/gorilla/mux"
 
-	"github.com/autopilot/apigateway/env"
+	"github.com/everycodingwave/api-gateway/env"
 )
 
 func (s *apiServer) getRouter() *mux.Router {
@@ -82,15 +82,19 @@ func (s *apiServer) getContact(w http.ResponseWriter, r *http.Request) {
 func (s *apiServer) createContact(w http.ResponseWriter, r *http.Request) {
 	s.proxyFunc("POST", contactAPIURL, "[apiserver error]create contact error:", w, r, func(bs []byte) {
 		contactID, err := jsonparser.GetString(bs, "contact_id")
-		if err == nil {
-			err := s.cac.Del(contactID)
-			if err != nil {
-				// purge cache failed can be quite tricky, cause user might have inconsistent data
-				// this reply on wether we set the cache expiring time, if that time window is samll
-				// the inconsistent data problem can be reduce down a bit, but still there.
-				// should keep an eye on this log whenever it occurs, and consider wrting a tool to deal with this
-				log.Printf("[apiserver error]purge cache failed, contactID %s %v", contactID, err)
-			}
+		if err != nil {
+			log.Printf("[apiserver error]createContact api, parse resp failed, contactID %s err %v", contactID, err)
+			return
 		}
+
+		err = s.cac.Del(contactID)
+		if err != nil {
+			// purge cache failed can be quite tricky, cause user might have inconsistent data
+			// this reply on wether we set the cache expiring time, if that time window is samll
+			// the inconsistent data problem can be reduce down a bit, but still there.
+			// should keep an eye on this log whenever it occurs, and consider wrting a tool to deal with this
+			log.Printf("[apiserver error]purge cache failed, contactID %s %v", contactID, err)
+		}
+
 	})
 }

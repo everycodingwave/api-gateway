@@ -9,8 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/autopilot/apigateway/cache"
-	"github.com/gorilla/mux"
+	"github.com/everycodingwave/api-gateway/cache"
 )
 
 var (
@@ -79,25 +78,60 @@ func TestGetContact(t *testing.T) {
 
 	// using http response recorder to record down the response and then check
 	// have to go thourgh mux cause mux will set context for url parameters like contact_id
-	router := mux.NewRouter()
-	router.HandleFunc("/v1/contact/{contact_id}", srv.getContact)
+	router := srv.getRouter()
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
 	// testing http response
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+		t.Errorf("get contact handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
 	// Check the response body is what we expect.
 	expected := string(fakeGetRespBody)
 	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+		t.Errorf("get contact handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
 	}
 
 	// testing cache
 	val, err := cac.Get("fake_contact_id_123")
 	if err != nil || val != string(fakeGetRespBody) {
 		t.Errorf("expect cache content fake_contact_id_123=%s, but got %s %v", string(fakeGetRespBody), val, err)
+	}
+}
+
+func TestCreateContact(t *testing.T) {
+	cac := newDummyCache()
+	// for further testing cache purging logic
+	cac.Set("fake_contact_id_123", "random_data", 0)
+	// server.New actually, same package
+	srv := New(cac, dummyProxyHTTP)
+	// Testing GET endpoint
+	req, err := http.NewRequest("POST", contactAPIURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// using http response recorder to record down the response and then check
+	// have to go thourgh mux cause mux will set context for url parameters like contact_id
+	router := srv.getRouter()
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// testing http response
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("create contact handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Check the response body is what we expect.
+	expected := string(fakePostRespBody)
+	if rr.Body.String() != expected {
+		t.Errorf("create contact handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+
+	// testing cache
+	val, err := cac.Get("fake_contact_id_123")
+	if err != cache.KeyNotExisted {
+		t.Errorf("expect cache content fake_contact_id_123 being purged, but got %s %v", val, err)
 	}
 }

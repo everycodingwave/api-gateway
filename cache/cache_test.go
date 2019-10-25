@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/autopilot/apigateway/env"
+	"github.com/everycodingwave/api-gateway/env"
 )
 
 var cacheAddr string

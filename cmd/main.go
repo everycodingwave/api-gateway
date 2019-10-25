@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/autopilot/apigateway/cache"
-	"github.com/autopilot/apigateway/env"
-	"github.com/autopilot/apigateway/server"
+	"github.com/everycodingwave/api-gateway/cache"
+	"github.com/everycodingwave/api-gateway/env"
+	"github.com/everycodingwave/api-gateway/server"
 	"log"
 	"os"
 )
